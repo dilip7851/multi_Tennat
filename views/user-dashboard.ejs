@@ -1,0 +1,1068 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gemini Email Generator + SMTP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #a5b4fc;
+      --primary-dark: #4f46e5;
+      --bg: #f8fafc;
+      --card: #fff;
+      --border: #e5e7eb;
+      --text: #1e293b;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --shadow: 0 8px 32px rgba(99, 102, 241, 0.10), 0 1.5px 4px rgba(0,0,0,0.03);
+      --input-bg: #f7f8fa;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 1.5px 4px rgba(0,0,0,0.2);
+      --input-bg: #334155;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      font-family: 'Inter', sans-serif; 
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: var(--text);
+      transition: all 0.3s ease;
+    }
+
+    header {
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+      color: var(--primary);
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .nav-link i {
+      font-size: 0.9rem;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1.5rem;
+      gap: 2rem;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      border: 1.5px solid var(--border);
+      position: sticky;
+      top: 5rem;
+      height: fit-content;
+    }
+
+    .avatar {
+      width: 80px; 
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(120deg, var(--primary), var(--primary-light));
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      border: 4px solid var(--primary-light);
+      color: white; 
+      font-size: 2rem; 
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.15);
+    }
+
+    .user-details { 
+      text-align: center; 
+      margin-bottom: 1.5rem; 
+    }
+
+    .user-details h4 { 
+      font-size: 1.2rem; 
+      font-weight: 700; 
+      margin-bottom: 0.3rem;
+    }
+
+    .user-details span { 
+      color: var(--muted); 
+      font-size: 0.9rem; 
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .menu-item:hover {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+    }
+
+    .menu-item.active {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary);
+    }
+
+    .menu-item i {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .logout-btn {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: none;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .content-section {
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      border: 1.5px solid var(--border);
+    }
+
+    .section-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.35rem;
+      display: flex; 
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    label i {
+      color: var(--primary);
+      width: 20px;
+      text-align: center;
+    }
+
+    input, select, textarea {
+      padding: 0.85rem 1.18rem;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--input-bg);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      color: var(--text);
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 230px;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: inherit;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 0.7rem;
+      box-shadow: 0 4px 15px rgba(99,102,241,0.2);
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99,102,241,0.3);
+    }
+
+    .btn:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .btn-secondary {
+      background: var(--input-bg);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .divider {
+      margin: 1.5rem 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .status-indicator {
+      margin-top: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      padding: 0.8rem;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.05);
+      border-left: 3px solid var(--primary-light);
+    }
+
+    .status-success {
+      background: rgba(16, 185, 129, 0.1) !important;
+      border-left-color: var(--success) !important;
+      color: var(--success) !important;
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.1) !important;
+      border-left-color: var(--danger) !important;
+      color: var(--danger) !important;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(99,102,241,0.1);
+    }
+
+    .feature-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Footer Styles */
+    footer {
+      background: var(--card);
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .footer-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-link {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--primary);
+    }
+
+    .theme-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--input-bg);
+    }
+
+    .copyright {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        padding: 1.2rem;
+      }
+      
+      .avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+        margin: 0 1rem 0 0;
+      }
+      
+      .user-details {
+        text-align: left;
+        margin: 0 1rem 0 0;
+      }
+      
+      .sidebar-menu {
+        flex-direction: row;
+        margin: 0 0 0 auto;
+      }
+      
+      .logout-btn {
+        margin: 0 0 0 1rem;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .sidebar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .avatar {
+        margin: 0 auto 1rem;
+      }
+      
+      .user-details {
+        text-align: center;
+        margin: 0 0 1rem;
+      }
+      
+      .sidebar-menu {
+        flex-direction: column;
+        margin: 0;
+      }
+      
+      .logout-btn {
+        margin: 1rem 0 0;
+        width: 100%;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .footer-container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+
+    .loading-pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <a href="#" class="logo">
+        <span class="logo-icon">✉️</span>
+        <span class="logo-text">GeminiMail</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" class="nav-link" data-section="generator">
+          <i class="fas fa-magic"></i> Generate
+        </a>
+        <a href="#" class="nav-link" data-section="smtp">
+          <i class="fas fa-server"></i> SMTP
+        </a>
+        <a href="#" class="nav-link" data-section="features">
+          <i class="fas fa-star"></i> Features
+        </a>
+
+        <div class="theme-toggle" onclick="toggleTheme()">
+          <i class="fas fa-moon" id="themeIcon"></i>
+          <span id="themeText">Dark</span>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="avatar" id="avatar">
+        <span id="avatarInitial">M</span>
+      </div>
+      <div class="user-details">
+        <h4 id="userName">Manish</h4>
+        <span id="userEmail">manishg2872@gmail.com</span>
+      </div>
+      <div class="sidebar-menu">
+        <a href="#" class="menu-item active" data-section="generator">
+          <i class="fas fa-magic"></i> Generate
+        </a>
+        <a href="#" class="menu-item" data-section="smtp">
+          <i class="fas fa-server"></i> SMTP
+        </a>
+        <a href="#" class="menu-item" data-section="features">
+          <i class="fas fa-star"></i> Features
+        </a>
+      </div>
+      <button class="logout-btn" onclick="logoutUser()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+
+    <div class="content-area">
+      <div class="content-section" id="generatorSection">
+        <div class="section-header">
+          <h2>Email Generator</h2>
+          <p>Create professional emails in seconds with AI assistance</p>
+        </div>
+        <div class="form-group">
+          <label for="topic"><i class="fas fa-envelope"></i> Email Topic</label>
+          <input type="text" id="topic" placeholder="e.g. Welcome Email for New User" />
+        </div>
+        <div class="form-group">
+          <label for="tone"><i class="fas fa-music"></i> Email Tone</label>
+          <select id="tone">
+            <option value="">-- Select Tone --</option>
+            <option value="formal">Formal</option>
+            <option value="informal">Informal</option>
+            <option value="friendly">Friendly</option>
+            <option value="persuasive">Persuasive</option>
+            <option value="professional">Professional</option>
+          </select>
+        </div>
+        <button class="btn" onclick="generateEmail()" id="generateBtn">
+          <i class="fas fa-magic"></i> Generate Email
+        </button>
+        <div class="divider">Email Delivery</div>
+        <div class="form-group">
+          <label for="receiver"><i class="fas fa-user"></i> Receiver Email</label>
+          <input type="email" id="receiver" placeholder="receiver@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="subject"><i class="fas fa-tag"></i> Subject</label>
+          <input type="text" id="subject" placeholder="Email subject will appear here" />
+        </div>
+        <div class="form-group">
+          <label for="emailContent"><i class="fas fa-pen"></i> Email Content</label>
+          <textarea id="emailContent" placeholder="Your generated email content will appear here..."></textarea>
+        </div>
+        <button class="btn" onclick="sendEmail()" id="sendBtn" disabled>
+          <i class="fas fa-paper-plane"></i> Send Email
+        </button>
+        <div class="status-indicator" id="statusIndicator">
+          <i class="fas fa-info-circle"></i>
+          <span>Ready to generate your email</span>
+        </div>
+      </div>
+
+      <div class="content-section hidden" id="smtpSection">
+        <div class="section-header">
+          <h2>SMTP Settings</h2>
+          <p>Configure your email server settings for sending emails</p>
+        </div>
+        <div class="form-group">
+          <label for="smtpHost"><i class="fas fa-server"></i> SMTP Host</label>
+          <input type="text" value="smtp.gmail.com" id="smtpHost" placeholder="e.g. smtp.gmail.com" />
+        </div>
+        <div class="form-group">
+          <label for="smtpPort"><i class="fas fa-network-wired"></i> SMTP Port</label>
+          <input type="number" value="465" id="smtpPort" placeholder="e.g. 587" />
+        </div>
+        <div class="form-group">
+          <label for="smtpEmail"><i class="fas fa-envelope"></i> Your Email</label>
+          <input type="email" id="smtpEmail" placeholder="e.g. you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="smtpPassword"><i class="fas fa-key"></i> SMTP Password</label>
+          <input type="password" id="smtpPassword" placeholder="Your SMTP password" />
+        </div>
+        <button class="btn" onclick="updateSmtpSettings()">
+          <i class="fas fa-save"></i> Update SMTP
+        </button>
+        <div class="status-indicator mt-3" id="smtpStatusIndicator">
+          <i class="fas fa-info-circle"></i>
+          <span>Configure your SMTP settings to send emails</span>
+        </div>
+        
+        <div class="section-header mt-4">
+          <h3>SMTP Guide</h3>
+          <p>Follow these steps to set up your Gmail SMTP</p>
+        </div>
+        <div class="form-group">
+
+
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/weA4yBSUMXs?si=-1BWGMntkkWVnH4x" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+
+<!--           
+          <ol style="padding-left: 1.5rem; line-height: 1.8; color: var(--muted);">
+            <li>Go to your Google Account settings</li>
+            <li>Navigate to "Security" section</li>
+            <li>Enable "Less secure app access" (or use App Password if 2FA is enabled)</li>
+            <li>Enter the SMTP details as shown above</li>
+            <li>Test your connection</li>
+          </ol> -->
+
+
+          
+        </div>
+      </div>
+
+      <div class="content-section hidden" id="featuresSection">
+        <div class="section-header">
+          <h2>Features</h2>
+          <p>Discover what makes GeminiMail the best email solution</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <h3 class="feature-title">AI-Powered Generation</h3>
+            <p class="feature-desc">Create professional emails in seconds with our advanced AI technology that understands context and tone.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+            <h3 class="feature-title">Direct SMTP Integration</h3>
+            <p class="feature-desc">Send emails directly from the platform with our seamless SMTP integration supporting all major providers.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-magic"></i>
+            </div>
+            <h3 class="feature-title">Multiple Tone Options</h3>
+            <p class="feature-desc">Choose from various tones like formal, friendly, or persuasive to match your communication style.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-lock"></i>
+            </div>
+            <h3 class="feature-title">Secure & Private</h3>
+            <p class="feature-desc">Your data is encrypted and never stored longer than necessary. We prioritize your privacy.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-moon"></i>
+            </div>
+            <h3 class="feature-title">Dark/Light Mode</h3>
+            <p class="feature-desc">Work comfortably day or night with our beautiful dark and light theme options.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-history"></i>
+            </div>
+            <h3 class="feature-title">History Tracking</h3>
+            <p class="feature-desc">Coming soon: Track all your generated emails and sent messages in one convenient place.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-container">
+      <div class="copyright">
+        &copy; 2023 GeminiMail. All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Terms</a>
+        <a href="#" class="footer-link">Privacy</a>
+        <a href="#" class="footer-link">Contact</a>
+        <a href="#" class="footer-link">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+
+    function toggleTheme() {
+
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      
+      if (newTheme === 'dark') {
+        themeIcon.className = 'fas fa-sun';
+        themeText.textContent = 'Light';
+      } else {
+        themeIcon.className = 'fas fa-moon';
+        themeText.textContent = 'Dark';
+      }
+    }
+
+    function loadTheme() {
+    
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      
+      if (savedTheme === 'dark') {
+        themeIcon.className = 'fas fa-sun';
+        themeText.textContent = 'Light';
+      } else {
+        themeIcon.className = 'fas fa-moon';
+        themeText.textContent = 'Dark';
+      }
+    }
+
+    loadTheme();
+
+    const user = JSON.parse(localStorage.getItem("users")) || {
+      userName: "Manish",
+      email: "manishg2872@gmail.com",
+    };
+    document.getElementById("userName").textContent = user.userName;
+    document.getElementById("userEmail").textContent = user.email;
+    document.getElementById("avatarInitial").textContent = user.userName.charAt(0);
+
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899'];
+    const colorIndex = user.userName.charCodeAt(0) % colors.length;
+    document.getElementById("avatar").style.background = `linear-gradient(120deg, ${colors[colorIndex]}, #a5b4fc)`;
+
+    function logoutUser() {
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("users");
+      window.location.href = "/user/login";
+    }
+
+    function showSection(sectionId) {
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+      });
+      document.getElementById(sectionId).classList.remove('hidden');
+      
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      document.querySelector(`.menu-item[data-section="${sectionId.replace('Section', '')}"]`).classList.add('active');
+      document.querySelector(`.nav-link[data-section="${sectionId.replace('Section', '')}"]`).classList.add('active');
+    }
+
+    document.querySelectorAll('.menu-item, .nav-link').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const section = this.getAttribute('data-section');
+        showSection(`${section}Section`);
+      });
+    });
+
+
+
+
+    function updateStatus(message, isError = false) {
+      const indicator = document.getElementById("statusIndicator");
+      indicator.innerHTML = `
+        <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
+      `;
+      
+      indicator.classList.remove('status-success', 'status-error');
+      
+      if (isError) {
+        indicator.classList.add('status-error');
+      } else if (message.includes('successfully')) {
+        indicator.classList.add('status-success');
+      }
+    }
+
+    function generateEmail() {
+      const topic = document.getElementById("topic").value.trim();
+      const tone = document.getElementById("tone").value.trim();
+      const subjectInput = document.getElementById("subject");
+      const contentArea = document.getElementById("emailContent");
+      const generateBtn = document.getElementById("generateBtn");
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!topic || !tone) {
+        updateStatus("Please fill both topic and tone fields", true);
+        return;
+      }
+      
+      subjectInput.value = "";
+      contentArea.value = "";
+      sendBtn.disabled = true;
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Generating...`;
+      generateBtn.classList.add('loading-pulse');
+      updateStatus("Generating email in real-time...");
+      
+      let cleanResponse = "";
+      const onChunk = (chunk) => {
+        const filteredChunk = chunk.replace(/```json/g,"").replace(/```/g,"").trim()
+        cleanResponse += filteredChunk;
+        contentArea.value = cleanResponse;
+      };
+      
+      const onDone = (emailData) => {
+        try {
+          subjectInput.value = emailData.subject;
+          contentArea.value = emailData.body;
+          sendBtn.disabled = false;
+          updateStatus("Email generated successfully!");
+        } catch (err) {
+          console.error("Data handling error:", err);
+          updateStatus("Failed to process email response. Please try again.", true);
+        } finally {
+          socket.off("email_chunk", onChunk);
+          socket.off("email_done", onDone);
+          socket.off("email_error", onError);
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = `<i class="fas fa-magic"></i> Generate Email`;
+          generateBtn.classList.remove('loading-pulse');
+        }
+      };
+      
+      const onError = (errMsg) => {
+        updateStatus(errMsg || "Failed to generate email", true);
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<i class="fas fa-magic"></i> Generate Email`;
+        generateBtn.classList.remove('loading-pulse');
+        socket.off("email_chunk", onChunk);
+        socket.off("email_done", onDone);
+        socket.off("email_error", onError);
+      };
+      
+      socket.on("email_chunk", onChunk);
+      socket.on("email_done", onDone);
+      socket.on("email_error", onError); 
+      socket.emit("generate_email", { topic, tone });
+    }
+
+    async function sendEmail() {
+      const to = document.getElementById("receiver").value.trim();
+      const subject = document.getElementById("subject").value.trim();
+      const body = document.getElementById("emailContent").value.trim();
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!to || !subject || !body) {
+        updateStatus("Please ensure all fields are filled", true);
+        return;
+      }
+      
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
+      sendBtn.classList.add('loading-pulse');
+      updateStatus("Sending your email...");
+      
+      try {
+        const res = await fetch("http://localhost:8000/user/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("userToken")}`
+          },
+          body: JSON.stringify({ to, subject, body })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("topic").value = "";
+          document.getElementById("tone").value = "";
+          document.getElementById("receiver").value = "";
+          document.getElementById("subject").value = "";
+          document.getElementById("emailContent").value = "";
+          document.getElementById("smtpEmail").value = "";
+          document.getElementById("smtpPassword").value = "";
+          sendBtn.disabled = true;
+          updateStatus("Email sent successfully!");
+        } else {
+          updateStatus("Failed to send: " + (data.message || "Unknown"), true);
+        }
+      } catch (err) {
+        console.error(err);
+        updateStatus("Server error while sending email.", true);
+      } finally {
+        sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('loading-pulse');
+      }
+    }
+
+    async function updateSmtpSettings() {
+      const host = document.getElementById("smtpHost").value.trim();
+      const port = parseInt(document.getElementById("smtpPort").value.trim());
+      const user = document.getElementById("smtpEmail").value.trim();
+      const pass = document.getElementById("smtpPassword").value.trim();
+      const smtpStatus = document.getElementById("smtpStatusIndicator");
+      
+      if (!host || !port || !user || !pass) {
+        smtpStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span>Please fill in all SMTP fields</span>`;
+        smtpStatus.classList.add('status-error');
+        return;
+      }
+      
+      try {
+        const res = await fetch("http://localhost:8000/user/smtp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("userToken")}`
+          },
+          body: JSON.stringify({ host, port, user, pass })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          smtpStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>SMTP settings updated successfully!</span>`;
+          smtpStatus.classList.add('status-success');
+          document.getElementById("smtpEmail").value = "";
+          document.getElementById("smtpPassword").value = "";
+        } else {
+          smtpStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span>Error: ${data.message || res.statusText}</span>`;
+          smtpStatus.classList.add('status-error');
+        }
+      } catch (err) {
+        console.error(err);
+        smtpStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span>Server error. Check your connection.</span>`;
+        smtpStatus.classList.add('status-error');
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+

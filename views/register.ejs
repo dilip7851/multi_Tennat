@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: #fff;
+      padding: 20px;
+    }
+
+    .register-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      padding: 40px 30px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      font-size: 30px;
+      font-weight: 600;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="text"].password-visible {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 0px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transition: background 0.3s ease;
+    }
+
+    input::placeholder {
+      color: #ddd;
+    }
+
+    input:focus {
+      outline: none;
+      background-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .password-wrapper {
+      position: relative;
+      margin-bottom: 5px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 15px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      user-select: none;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .toggle-password:hover {
+      color: #ffeb3b;
+    }
+
+  .error {
+  color: #ff4d4f; 
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 5px;
+  margin-bottom: 12px;
+  padding-left: 5px;
+}
+    button {
+      background-color: #00c6ff;
+      background-image: linear-gradient(45deg, #0072ff, #00c6ff);
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-image: linear-gradient(45deg, #005bea, #00c6ff);
+    }
+
+    a {
+      display: block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: opacity 0.3s ease;
+      text-align: center;
+    }
+
+    a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    #toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+
+    #toast.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #toast.success {
+      background-color: #38a169;
+      color: #fff;
+    }
+
+    #toast.error {
+      background-color: #e53e3e;
+      color: #fff;
+    }
+
+    @media (max-width: 480px) {
+      .register-container {
+        padding: 30px 20px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <h2>Register Admin</h2>
+    <form id="registerForm" autocomplete="off">
+      <label>
+        <input type="text" name="userName" placeholder="Full Name" />
+      </label>
+      <div class="error" id="nameError"></div>
+
+      <label>
+        <input type="email" name="email" placeholder="Email" />
+      </label>
+      <div class="error" id="emailError"></div>
+
+      <label>
+        <input type="tel" name="mobileNo" placeholder="Mobile Number" maxlength="10" pattern="[0-9]{10}" />
+      </label>
+      <div class="error" id="mobileError"></div>
+
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="Password" />
+        <span class="toggle-password" id="togglePassword" title="Show/Hide Password">👁️</span>
+      </div>
+      <div class="error" id="passwordError"></div>
+
+      <button type="submit">Create Account</button>
+    </form>
+    <a href="/login">Already have an account? Login</a>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    togglePassword.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      togglePassword.textContent = isPassword ? '🙈' : '👁️';
+    });
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = type === 'success' ? '✔️' : '❌';
+
+      toast.className = '';
+      toast.textContent = '';
+      toast.classList.add('show', type);
+      toast.innerHTML = `<span>${icon}</span> ${message}`;
+
+      setTimeout(() => {
+        toast.classList.remove('show', 'success', 'error');
+      }, 3000);
+    }
+
+     const form = document.getElementById('registerForm');
+
+      form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      document.getElementById('nameError').textContent = '';
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('mobileError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      const { userName, email, mobileNo, password } = data;
+
+      let hasError = false;
+
+      if (!userName.trim()) {
+        document.getElementById('nameError').textContent = 'Full name is required';
+        hasError = true;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        document.getElementById('emailError').textContent = 'Invalid email address';
+        hasError = true;
+      }
+
+      const mobileRegex = /^[0-9]{10}$/;
+      if (!mobileRegex.test(mobileNo)) {
+        document.getElementById('mobileError').textContent = 'Mobile number must be 10 digits';
+        hasError = true;
+      }
+
+      if (!password || password.length < 6) {
+        document.getElementById('passwordError').textContent = 'Password must be at least 6 characters';
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+
+      
+      try {
+        const response = await fetch('http://localhost:8000/admin/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(data)   
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          showToast(result.message);
+          // localStorage.setItem("adminToken", result.data.token);
+          // localStorage.setItem("adminName", result.data.admin.userName);
+          // localStorage.setItem("adminId",result.data.admin.id)
+          form.reset();
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 900);
+        } else {
+          showToast(result.message || 'Registration failed.', 'error');
+        }
+      } catch (error) {
+        showToast('Something went wrong.', 'error');
+        console.error(error);
+      }
+    });
+  </script>
+
+</body>
+</html>
