@@ -688,11 +688,11 @@
         </div>
         <div class="form-group">
           <label for="smtpHost"><i class="fas fa-server"></i> SMTP Host</label>
-          <input type="text" value="smtp.gmail.com" id="smtpHost" placeholder="e.g. smtp.gmail.com" />
+          <input type="text" value="smtp.gmail.com" id="smtpHost" readonly placeholder="e.g. smtp.gmail.com" />
         </div>
         <div class="form-group">
           <label for="smtpPort"><i class="fas fa-network-wired"></i> SMTP Port</label>
-          <input type="number" value="465" id="smtpPort" placeholder="e.g. 587" />
+          <input type="number" value="465" id="smtpPort" readonly placeholder="e.g. 587" />
         </div>
         <div class="form-group">
           <label for="smtpEmail"><i class="fas fa-envelope"></i> Your Email</label>
@@ -811,7 +811,7 @@
 
       const currentTheme = document.documentElement.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      
+
       document.documentElement.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
       
@@ -920,7 +920,7 @@
         updateStatus("Please fill both topic and tone fields", true);
         return;
       }
-      
+
       subjectInput.value = "";
       contentArea.value = "";
       sendBtn.disabled = true;
@@ -981,7 +981,7 @@
         updateStatus("Please ensure all fields are filled", true);
         return;
       }
-      
+
       sendBtn.disabled = true;
       sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
       sendBtn.classList.add('loading-pulse');
@@ -1018,8 +1018,7 @@
         sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
         sendBtn.disabled = false;
         sendBtn.classList.remove('loading-pulse');
-      }
-    }
+}} 
 
     async function updateSmtpSettings() {
       const host = document.getElementById("smtpHost").value.trim();
