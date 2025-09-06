@@ -37,18 +37,21 @@ Service – Business logic and integrations (Gemini API, SMTP, etc.).
 
 
 🧰 Tech Stack
+
 Backend
 Node.js + Express.js – REST APIs & app logic
 MongoDB – NoSQL database with dynamic multi-tenant setup
 Socket.IO – Real-time data streaming
 Gemini 1.5 Flash API – Smart content generation
 Nodemailer (SMTP) – Email sending with attachments
+
 Frontend
 HTML, CSS, JavaScript – Clean UI with live updates
 Displays generated email content as users type or stream from API
 
 
 📁 Folder Structure
+
 project-root/ │ ├── config/ # Database connections and global config ├── controllers/ # Route logic (admin, user, email, auth) ├── middlewares/ # JWT auth, role-based access, error handling ├── models/ # Mongoose schemas for User, Admin, EmailLog, etc. ├── routes/ # Express route definitions for APIs ├── services/ # Business logic (Gemini API, SMTP email sending, OTP) ├── utils/ # Helper functions, token handlers, validations ├── views/ # Frontend (HTML, JS, CSS for user interface) │ ├── .gitignore ├── package.json ├── package-lock.json └── server.js # Main server entry point
 
 This structure reflects the MVCS design:
@@ -77,8 +80,7 @@ PORT=5000 MONGO_URI=your_mongodb_connection_string JWT_SECRET=your_jwt_secret GE
 
 node server.js
 
-🌐 Live Demo
-https://multitent-sys12.onrender.com/login
+
 
 📌 Summary
 This project is designed to simulate a real-world SaaS platform:
@@ -90,4 +92,5 @@ Supports multi-database tenants for data isolation
 Real-time AI email generation + streaming
 
 Full email delivery system with attachments and logs
+
 
