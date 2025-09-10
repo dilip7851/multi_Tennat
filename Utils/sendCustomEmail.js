@@ -31,6 +31,10 @@ export const sendCustomEmail = async (email, subject, body) => {
           max-width: 600px;
           margin: 0 auto;
           padding: 20px;
+          background-image: url("https://plus.unsplash.com/premium_photo-1682309526815-efe5d6225117?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWFpbHxlbnwwfHwwfHx8MA%3D%3D");
+         background-position: center;
+         background-repeat: no-repeat;
+         background-size: cover;
         }
         .header {
           color: #2563eb;
@@ -51,6 +55,7 @@ export const sendCustomEmail = async (email, subject, body) => {
       </style>
     </head>
     <body>
+
       <div class="header">
         <h2>${subject}</h2>
       </div>

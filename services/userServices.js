@@ -127,11 +127,28 @@ export const UpdateSmtpService = async (
 };
 
 export const verifySmtpService = async ({ host, port, user }) => {
-  if (host && port && user) {
-    return { success: true, message: message.SMTP_VERIFIED };
-  } else {
-    return { success: false, message: message.MISSING_FIELDS };
+
+ try {
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+       secure: port === 465, 
+      auth: {
+        user,
+        pass,
+      },
+    });
+    await transporter.verify();
+    return { success: true, message: "SMTP verified successfully" };
+  } catch (err) {
+    return { success: false, message: "Invalid SMTP credentials" };
   }
+
+  // if (host && port && user) {
+  //   return { success: true, message: message.SMTP_VERIFIED };
+  // } else {
+  //   return { success: false, message: message.MISSING_FIELDS };
+  // }
 };
 
 
@@ -140,8 +157,9 @@ export const sendEmailService = async (
   to,
   subject,
   body,
+   attachments,
   adminId,
-  userId
+  userId,
 ) => {
   const connection = await getDBConnection(adminId);
   const User = UserModel(connection);
@@ -164,6 +182,7 @@ export const sendEmailService = async (
   const transporter = nodemailer.createTransport({
     host,
     port,
+     secure: port === 465,
     auth: {
       user,
       pass: decryptedPassword,
@@ -221,6 +240,9 @@ export const sendEmailService = async (
       </body>
       </html>
     `,
+   attachments,
+
+
   });
 
   return { success: true, message: "Email sent successfully." };

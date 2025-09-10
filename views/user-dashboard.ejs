@@ -635,7 +635,69 @@
       </button>
     </div>
 
+
     <div class="content-area">
+
+      <form id="emailForm" enctype="multipart/form-data" onsubmit="sendEmail(event)">
+  <div class="content-section" id="generatorSection">
+    <div class="section-header">
+      <h2>Email Generator</h2>
+      <p>Create professional emails in seconds with AI assistance</p>
+    </div>
+
+    <div class="form-group">
+      <label for="topic"><i class="fas fa-envelope"></i> Email Topic</label>
+      <input type="text" id="topic" placeholder="e.g. Welcome Email for New User" />
+    </div>
+
+    <div class="form-group">
+      <label for="tone"><i class="fas fa-music"></i> Email Tone</label>
+      <select id="tone">
+        <option value="">-- Select Tone --</option>
+        <option value="formal">Formal</option>
+        <option value="informal">Informal</option>
+        <option value="friendly">Friendly</option>
+        <option value="persuasive">Persuasive</option>
+        <option value="professional">Professional</option>
+      </select>
+    </div>
+
+    <button class="btn" type="button" onclick="generateEmail()" id="generateBtn">
+      <i class="fas fa-magic"></i> Generate Email
+    </button>
+
+    <div class="divider">Email Delivery</div>
+
+    <div class="form-group">
+      <label for="receiver"><i class="fas fa-user"></i> Receiver Email</label>
+      <input type="email" id="receiver" placeholder="receiver@example.com" required />
+    </div>
+
+    <div class="form-group">
+      <label for="subject"><i class="fas fa-tag"></i> Subject</label>
+      <input type="text" id="subject" placeholder="Email subject will appear here" required />
+    </div>
+
+    <div class="form-group">
+      <label for="emailContent"><i class="fas fa-pen"></i> Email Content</label>
+      <textarea id="emailContent" placeholder="Your generated email content will appear here..." required></textarea>
+    </div>
+
+    <div style="margin: 5px;">
+      <input type="file" id="attachment" multiple  required/>
+    </div>
+
+    <button class="btn" type="submit" id="sendBtn">
+      <i class="fas fa-paper-plane"></i> Send Email
+    </button>
+
+    <div class="status-indicator" id="statusIndicator">
+      <i class="fas fa-info-circle"></i>
+      <span>Ready to generate your email</span>
+    </div>
+  </div>
+</form>
+<!--       
       <div class="content-section" id="generatorSection">
         <div class="section-header">
           <h2>Email Generator</h2>
@@ -672,6 +734,9 @@
           <label for="emailContent"><i class="fas fa-pen"></i> Email Content</label>
           <textarea id="emailContent" placeholder="Your generated email content will appear here..."></textarea>
         </div>
+        <div style="margin: 5px;">
+          <input type="file" id="attachment" multiple />
+        </div>
         <button class="btn" onclick="sendEmail()" id="sendBtn" disabled>
           <i class="fas fa-paper-plane"></i> Send Email
         </button>
@@ -679,7 +744,8 @@
           <i class="fas fa-info-circle"></i>
           <span>Ready to generate your email</span>
         </div>
-      </div>
+
+      </div> -->
 
       <div class="content-section hidden" id="smtpSection">
         <div class="section-header">
@@ -806,7 +872,6 @@
   <script>
     const socket = io();
 
-
     function toggleTheme() {
 
       const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -861,6 +926,7 @@
     function logoutUser() {
       localStorage.removeItem("userToken");
       localStorage.removeItem("users");
+      localStorage.removeItem("smtpConfigured");
       window.location.href = "/user/login";
     }
 
@@ -971,54 +1037,176 @@
       socket.emit("generate_email", { topic, tone });
     }
 
-    async function sendEmail() {
-      const to = document.getElementById("receiver").value.trim();
-      const subject = document.getElementById("subject").value.trim();
-      const body = document.getElementById("emailContent").value.trim();
-      const sendBtn = document.getElementById("sendBtn");
 
-      if (!to || !subject || !body) {
-        updateStatus("Please ensure all fields are filled", true);
-        return;
-      }
+    async function sendEmail(event) {
+        event.preventDefault();
+  const to = document.getElementById("receiver").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const body = document.getElementById("emailContent").value.trim();
+  const sendBtn = document.getElementById("sendBtn");
+  const attachmentInput = document.getElementById("attachment");
 
-      sendBtn.disabled = true;
-      sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
-      sendBtn.classList.add('loading-pulse');
-      updateStatus("Sending your email...");
+  const isSmtpConfigured = localStorage.getItem("smtpConfigured") === "true";
+  if (!isSmtpConfigured) {
+    updateStatus("Please setup your SMTP settings before sending email.", true);
+    return;
+  }
+
+  if (!to || !subject || !body || !attachmentInput) {
+    updateStatus("Please ensure all fields are filled", true);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("to", to);
+  formData.append("subject", subject);
+  formData.append("body", body);
+
+for (let i = 0; i < attachmentInput.files.length; i++) {
+  formData.append("attachments", attachmentInput.files[i]);
+}
+
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
+  updateStatus("Sending your email...");
+
+  try {
+    const res = await fetch("http://localhost:8000/user/send-email", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("userToken")}`
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.success) {
+       document.getElementById("topic").value = "";
+      document.getElementById("tone").value = "";
+      document.getElementById("receiver").value = "";
+      document.getElementById("subject").value = "";
+      document.getElementById("emailContent").value = "";
+      document.getElementById("attachment").value="";
+      updateStatus("Email sent successfully!");
+    } else {
+      updateStatus("Failed to send: " + (data.message || "Unknown"), true);
+    }
+  } catch (err) {
+    console.error(err);
+    updateStatus("Server error while sending email.", true);
+  } finally {
+    sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
+    sendBtn.disabled = false;
+  }
+}
+
+
+//     async function sendEmail() {
+//   const to = document.getElementById("receiver").value.trim();
+//   const subject = document.getElementById("subject").value.trim();
+//   const body = document.getElementById("emailContent").value.trim();
+//   const sendBtn = document.getElementById("sendBtn");
+
+//   const isSmtpConfigured = localStorage.getItem("smtpConfigured") === "true";
+//   if (!isSmtpConfigured) {
+//     updateStatus("Please setup your SMTP settings before sending email.", true);
+//     return;
+//   }
+
+//   if (!to || !subject || !body) {
+//     updateStatus("Please ensure all fields are filled", true);
+//     return;
+//   }
+
+//   sendBtn.disabled = true;
+//   sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
+//   sendBtn.classList.add('loading-pulse');
+//   updateStatus("Sending your email...");
+
+//   try {
+//     const res = await fetch("http://localhost:8000/user/send-email", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Authorization": `Bearer ${localStorage.getItem("userToken")}`
+//       },
+//       body: JSON.stringify({ to, subject, body })
+//     });
+
+//     const data = await res.json();
+//     if (data.success) {
+//       document.getElementById("topic").value = "";
+//       document.getElementById("tone").value = "";
+//       document.getElementById("receiver").value = "";
+//       document.getElementById("subject").value = "";
+//       document.getElementById("emailContent").value = "";
+//       updateStatus("Email sent successfully!");
+//     } else {
+//       updateStatus("Failed to send: " + (data.message || "Unknown"), true);
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     updateStatus("Server error while sending email.", true);
+//   } finally {
+//     sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
+//     sendBtn.disabled = false;
+//     sendBtn.classList.remove('loading-pulse');
+//   }
+// }
+
+
+//     async function sendEmail() {
+//       const to = document.getElementById("receiver").value.trim();
+//       const subject = document.getElementById("subject").value.trim();
+//       const body = document.getElementById("emailContent").value.trim();
+//       const sendBtn = document.getElementById("sendBtn");
+
+//       if (!to || !subject || !body) {
+//         updateStatus("Please ensure all fields are filled", true);
+//         return;
+//       }
+
+//       sendBtn.disabled = true;
+//       sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
+//       sendBtn.classList.add('loading-pulse');
+//       updateStatus("Sending your email...");
       
-      try {
-        const res = await fetch("http://localhost:8000/user/send-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("userToken")}`
-          },
-          body: JSON.stringify({ to, subject, body })
-        });
+//       try {
+//         const res = await fetch("http://localhost:8000/user/send-email", {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//             "Authorization": `Bearer ${localStorage.getItem("userToken")}`
+//           },
+//           body: JSON.stringify({ to, subject, body })
+//         });
         
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById("topic").value = "";
-          document.getElementById("tone").value = "";
-          document.getElementById("receiver").value = "";
-          document.getElementById("subject").value = "";
-          document.getElementById("emailContent").value = "";
-          document.getElementById("smtpEmail").value = "";
-          document.getElementById("smtpPassword").value = "";
-          sendBtn.disabled = true;
-          updateStatus("Email sent successfully!");
-        } else {
-          updateStatus("Failed to send: " + (data.message || "Unknown"), true);
-        }
-      } catch (err) {
-        console.error(err);
-        updateStatus("Server error while sending email.", true);
-      } finally {
-        sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
-        sendBtn.disabled = false;
-        sendBtn.classList.remove('loading-pulse');
-}} 
+//         const data = await res.json();
+//         if (data.success) {
+ 
+
+//           document.getElementById("topic").value = "";
+//           document.getElementById("tone").value = "";
+//           document.getElementById("receiver").value = "";
+//           document.getElementById("subject").value = "";
+//           document.getElementById("emailContent").value = "";
+//           document.getElementById("smtpEmail").value = "";
+//           document.getElementById("smtpPassword").value = "";
+          
+
+//           sendBtn.disabled = true;
+//           updateStatus("Email sent successfully!");
+//         } else {
+//           updateStatus("Failed to send: " + (data.message || "Unknown"), true);
+//         }
+//       } catch (err) {
+//         console.error(err);
+//         updateStatus("Server error while sending email.", true);
+//       } finally {
+//         sendBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Send Email`;
+//         sendBtn.disabled = false;
+//         sendBtn.classList.remove('loading-pulse');
+// }} 
 
     async function updateSmtpSettings() {
       const host = document.getElementById("smtpHost").value.trim();
@@ -1047,6 +1235,7 @@
         if (data.success) {
           smtpStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>SMTP settings updated successfully!</span>`;
           smtpStatus.classList.add('status-success');
+           localStorage.setItem("smtpConfigured", "true");
           document.getElementById("smtpEmail").value = "";
           document.getElementById("smtpPassword").value = "";
         } else {

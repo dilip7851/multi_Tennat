@@ -134,21 +134,31 @@ export const verifySmtpController = async (req, res) => {
 export const sendEmailController = async (req, res) => {
   try {
     const { to, subject, body } = req.body;
+     const attachments = req.files || [];
     const adminId = req.adminId;
     const userId = req.user._id.toString();
 
     if (!to || !subject || !body) {
       return errorResponse(res, statuscode.BAD_REQUEST, message.MISSING_FIELDS);
     }
+  
+   const formattedAttachments = attachments.map((file) => ({
+      filename: file.originalname || "file",
+      content: file.buffer,
+      contentType: file.mimetype || "application/octet-stream",
+    }));
+
+
 
     const result = await sendEmailService(
       req,
       to,
       subject,
       body,
+      formattedAttachments,
       adminId,
       userId,
-      res
+      res,
     );
     
     if (result.success) {
