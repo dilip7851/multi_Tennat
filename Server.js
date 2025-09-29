@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import AdminRouter from "./Router/AdminRouter.js";
 import UserRouter from "./Router/UserRouter.js";
 import AuthRouter from './Router/AuthRouter.js'; 
-import geminiRoutes from "./Router/geminiRoutes.js";
+// import geminiRoutes from "./Router/geminiRoutes.js";
 import { Server } from "socket.io";
 import  { createServer } from 'http';
 import { handleGeminiStream } from "./controllers/geminiController.js";
@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 app.use('/', AuthRouter); 
 app.use('/admin', AdminRouter);
 app.use('/user', UserRouter);
-app.use('/api/gemini',geminiRoutes)
+// app.use('/api/gemini',geminiRoutes)
 
 
 app.use((req, res) => {

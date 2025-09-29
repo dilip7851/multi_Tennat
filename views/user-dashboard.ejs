@@ -994,32 +994,62 @@
       generateBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Generating...`;
       generateBtn.classList.add('loading-pulse');
       updateStatus("Generating email in real-time...");
-      
+
+
       let cleanResponse = "";
-      const onChunk = (chunk) => {
-        const filteredChunk = chunk.replace(/```json/g,"").replace(/```/g,"").trim()
-        cleanResponse += filteredChunk;
-        contentArea.value = cleanResponse;
-      };
+
+const onChunk = (chunk) => {
+  const filteredChunk = chunk.replace(/```json/g,"").replace(/```/g,"").trim();
+  cleanResponse += filteredChunk;
+
+};
+
+const onDone = (emailData) => {
+  try {
+    subjectInput.value = emailData.subject;
+    contentArea.value = emailData.body; 
+    sendBtn.disabled = false;
+    updateStatus("Email generated successfully!");
+  } catch (err) {
+    console.error("Data handling error:", err);
+    updateStatus("Failed to process email response. Please try again.", true);
+  } finally {
+    socket.off("email_chunk", onChunk);
+    socket.off("email_done", onDone);
+    socket.off("email_error", onError);
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = `<i class="fas fa-magic"></i> Generate Email`;
+    generateBtn.classList.remove('loading-pulse');
+  }
+};
       
-      const onDone = (emailData) => {
-        try {
-          subjectInput.value = emailData.subject;
-          contentArea.value = emailData.body;
-          sendBtn.disabled = false;
-          updateStatus("Email generated successfully!");
-        } catch (err) {
-          console.error("Data handling error:", err);
-          updateStatus("Failed to process email response. Please try again.", true);
-        } finally {
-          socket.off("email_chunk", onChunk);
-          socket.off("email_done", onDone);
-          socket.off("email_error", onError);
-          generateBtn.disabled = false;
-          generateBtn.innerHTML = `<i class="fas fa-magic"></i> Generate Email`;
-          generateBtn.classList.remove('loading-pulse');
-        }
-      };
+      // let cleanResponse = "";
+      // const onChunk = (chunk) => {
+      //   const filteredChunk = chunk.replace(/```json/g,"").replace(/```/g,"").trim()
+      //   cleanResponse += filteredChunk;
+      //   contentArea.value = cleanResponse;
+      // };
+      
+      // const onDone = (emailData) => {
+      //   try {
+      //     subjectInput.value = emailData.subject;
+      //     contentArea.value = emailData.body;
+      //     sendBtn.disabled = false;
+      //     updateStatus("Email generated successfully!");
+      //   } catch (err) {
+      //     console.error("Data handling error:", err);
+      //     updateStatus("Failed to process email response. Please try again.", true);
+      //   } finally {
+      //     socket.off("email_chunk", onChunk);
+      //     socket.off("email_done", onDone);
+      //     socket.off("email_error", onError);
+      //     generateBtn.disabled = false;
+      //     generateBtn.innerHTML = `<i class="fas fa-magic"></i> Generate Email`;
+      //     generateBtn.classList.remove('loading-pulse');
+      //   }
+      // };
+
+
       
       const onError = (errMsg) => {
         updateStatus(errMsg || "Failed to generate email", true);
