@@ -69,12 +69,78 @@
 //   }
 // };
 
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// import dotenv from "dotenv";
+// dotenv.config();
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// export const handleGeminiStream = (socket) => {
+//   socket.on("generate_email", async ({ topic, tone }) => {
+//     if (!topic || !tone) {
+//       socket.emit("email_error", "Missing topic or tone");
+//       return;
+//     }
+
+//     try {
+//       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+//       const prompt = `
+// Generate a complete professional email based on the topic: "${topic}" using a ${tone} tone.
+// Fill all placeholders like [Your Name], [Company Name], etc., with realistic example data.
+
+// Return in valid JSON format with these exact keys:
+// {
+//   "subject": "Subject line here",
+//   "body": "Plain text email body here (no HTML, just text with line breaks)"
+// }
+
+// `;
+
+//       const result = await model.generateContentStream(prompt);
+
+//       let fullResponse = "";
+
+//       for await (const chunk of result.stream) {
+//         const chunkText = chunk.text();
+//         fullResponse += chunkText;
+
+//         socket.emit("email_chunk", chunkText);
+//       }
+
+//       try {
+//         let cleanResponse = fullResponse
+//           .replace(/```json/g, "")
+//           .replace(/```/g, "")
+//           .trim();
+
+//         const jsonResponse = JSON.parse(cleanResponse);
+
+//         if (!jsonResponse.subject || !jsonResponse.body) {
+//           throw new Error("Invalid response format from Gemini");
+//         }
+//         socket.emit("email_done", jsonResponse);
+//       } catch (parseError) {
+//         console.error("JSON parse error:", parseError);
+//         console.error("Original response:", fullResponse);
+//         socket.emit(
+//           "email_error",
+//           "Failed to generate properly formatted email. Please try again."
+//         );
+//       }
+//     } catch (error) {
+//       console.error("Gemini error:", error);
+//       socket.emit("email_error", error.message || "Failed to generate email");
+//     }
+//   });
+// };
+
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 export const handleGeminiStream = (socket) => {
   socket.on("generate_email", async ({ topic, tone }) => {
@@ -84,7 +150,6 @@ export const handleGeminiStream = (socket) => {
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const prompt = `
 Generate a complete professional email based on the topic: "${topic}" using a ${tone} tone. 
 Fill all placeholders like [Your Name], [Company Name], etc., with realistic example data.
@@ -94,43 +159,43 @@ Return in valid JSON format with these exact keys:
   "subject": "Subject line here",
   "body": "Plain text email body here (no HTML, just text with line breaks)"
 }
-
 `;
 
-      const result = await model.generateContentStream(prompt);
+      // ✅ New way to call streaming content
+      const stream = await genAI.models.generateContentStream({
+        model: "gemini-1.5-flash", // or gemini-2.5-flash if enabled
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
 
       let fullResponse = "";
 
-      for await (const chunk of result.stream) {
-        const chunkText = chunk.text();
-        fullResponse += chunkText;
-
-        socket.emit("email_chunk", chunkText);
+      for await (const chunk of stream) {
+        const text = chunk.text();
+        fullResponse += text;
+        socket.emit("email_chunk", text); // send partial response
       }
 
+      // ✅ Try parsing final response as JSON
       try {
-        let cleanResponse = fullResponse
+        const clean = fullResponse
           .replace(/```json/g, "")
           .replace(/```/g, "")
           .trim();
 
-        const jsonResponse = JSON.parse(cleanResponse);
+        const parsed = JSON.parse(clean);
 
-        if (!jsonResponse.subject || !jsonResponse.body) {
-          throw new Error("Invalid response format from Gemini");
+        if (!parsed.subject || !parsed.body) {
+          throw new Error("Invalid format");
         }
-        socket.emit("email_done", jsonResponse);
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        console.error("Original response:", fullResponse);
-        socket.emit(
-          "email_error",
-          "Failed to generate properly formatted email. Please try again."
-        );
+
+        socket.emit("email_done", parsed);
+      } catch (jsonErr) {
+        console.error("Parse Error:", jsonErr);
+        socket.emit("email_error", "Failed to parse Gemini response.");
       }
     } catch (error) {
       console.error("Gemini error:", error);
-      socket.emit("email_error", error.message || "Failed to generate email");
+      socket.emit("email_error", error.message || "Gemini stream failed.");
     }
   });
 };
